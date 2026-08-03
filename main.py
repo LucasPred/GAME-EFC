@@ -1,177 +1,171 @@
 import streamlit as st
 import pandas as pd
-import datetime
 
-# Configuración inicial de la página
 st.set_page_config(
-    page_title="Simulador Integral de Empresas Familiares",
-    page_icon="💼",
-    layout="wide"
+    page_title="Legado Familiar: El Simulador Narrativo",
+    page_icon="🕹️",
+    layout="centered"
 )
 
-# Inicialización de Estados de Sesión (Base de datos en memoria del simulador)
-if "user_authenticated" not in st.session_state:
-    st.session_state.user_authenticated = False
-if "current_user" not in st.session_state:
-    st.session_state.current_user = ""
-if "user_role" not in st.session_state:
-    st.session_state.user_role = "Junior"
-if "genogram_data" not in st.session_state:
-    st.session_state.genogram_data = []
-if "grapho_data" not in st.session_state:
-    st.session_state.grapho_data = {}
+# Estilo visual inmersivo tipo videojuego clásico
+st.markdown("""
+    <style>
+    .stApp { background-color: #0e1117; color: #ffffff; }
+    .stage-box { padding: 20px; border-radius: 10px; background-color: #1f2937; border: 2px solid #3b82f6; margin-bottom: 20px; }
+    </style>
+""", unsafe_allow_html=True)
 
-# Panel de Autenticación y Control de Acceso
-def authentication_gate():
-    st.title("🔐 Acceso al Sistema - Simulador Patrimonial y Familiar")
+# Control de Sesión del Videojuego
+if "stage" not in st.session_state:
+    st.session_state.stage = 1
+if "player_name" not in st.session_state:
+    st.session_state.player_name = ""
+if "player_role" not in st.session_state:
+    st.session_state.player_role = ""
+if "history_log" not in st.session_state:
+    st.session_state.history_log = []
+
+# Pantalla de Inicio de Sesión / Ingreso al Cartucho del Juego
+if not st.session_state.player_name:
+    st.title("🕹️ LEGADO FAMILIAR: EL VIDEOJUEGO SIMULADOR")
+    st.markdown("### *Donde el pasado, el presente y el futuro de la empresa compleja cobran vida.*")
     st.markdown("---")
     
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        username = st.text_input("Usuario / Identificador Familiar")
-        password = st.text_input("Contraseña de Acceso", type="password")
-        role = st.selectbox("Posición / Función en el Grupo", ["Fundador / Accionista Mayoritario", "Directorio / Director Ejecutivo", "Gerencia Operativa", "Nueva Generación / Sucesión", "Administrador General"])
+    with st.form("login_form"):
+        name = st.text_input("Ingrese su Nombre y Apellido (Identificador de Usuario)")
+        role = st.selectbox("Seleccione su Rol en el Grupo Empresario", [
+            "Fundador / Patriarca / Matriarca",
+            "Directorio Ejecutivo / Externo",
+            "Segunda Generación (Sucesión Directa)",
+            "Tercera Generación / Nuevos Ingresos",
+            "Gerencia Operativa / No Familiar"
+        ])
+        pwd = st.text_input("Clave de Acceso al Sistema", type="password")
         
-        if st.button("Ingresar al Sistema"):
-            if username and password:
-                st.session_state.user_authenticated = True
-                st.session_state.current_user = username
-                st.session_state.user_role = role
-                st.rerun()
-            else:
-                st.warning("Por favor, ingrese credenciales válidas.")
-
-# Módulo 1: Línea de Tiempo e Historia del Grupo
-def render_timeline_module():
-    st.header("⏳ Línea de Tiempo Histórica y Legado Fundacional")
-    st.markdown("Explore los hitos, los sueños fundacionales, los éxitos y los momentos de crisis superados por los fundadores.")
-    
-    # Simulación de hitos históricos
-    hitos = [
-        {"año": 1985, "hito": "Fundación de la Compañía Operativa", "detalle": "Inicios con visión de largo plazo y asunción de riesgos calculados."},
-        {"año": 1998, "hito": "Expansión Regional e Industrial", "detalle": "Consolidación de activos fijos y apertura hacia nuevos mercados."},
-        {"año": 2010, "hito": "Creación de la Oficina Familiar (Family Office)", "detalle": "Institucionalización de la gestión patrimonial y separación del patrimonio."},
-        {"año": 2020, "hito": "Implementación del Protocolo Familiar", "detalle": "Primeras normativas consensuadas para regular ingreso y salida de familiares."}
-    ]
-    
-    for item in hitos:
-        with st.expander(f"Año {item['año']} - {item['hito']}"):
-            st.write(f"**Descripción:** {item['detalle']}")
-            st.info("💡 **Reflexión teórica (Escuela Angus):** La institucionalización temprana reduce la entropía relacional.")
-
-# Módulo 2: Genograma Interactivo y Teoría de Bowen
-def render_genogram_module():
-    st.header("🧬 Genograma Dinámico y Dinámicas de Bowen")
-    st.markdown("Construcción interactiva del mapa familiar, triangulaciones y alianzas con terceros.")
-    
-    with st.form("genogram_form"):
-        st.subheader("Agregar o Actualizar Miembro en la Red Familiar")
-        nombre_miembro = st.text_input("Nombre del Familiar / Actor Clave")
-        generacion = st.selectbox("Generación", ["1° (Fundadores)", "2° (Hijos / Herederos)", "3° (Nietos / Jóvenes)"])
-        vinculo_tension = st.slider("Nivel de Tensión Sistémica (Bowen)", 1, 10, 5)
-        tercero_involucrado = st.text_input("Participación de Terceros / Asesores / Externos (Triada)")
-        
-        submitted = st.form_submit_button("Registrar en el Genograma")
-        if submitted and nombre_miembro:
-            st.session_state.genogram_data.append({
-                "nombre": nombre_miembro,
-                "generacion": generacion,
-                "tension": vinculo_tension,
-                "tercero": tercero_involucrado
-            })
-            st.success(f"Miembro {nombre_miembro} incorporado correctamente al genograma.")
-            
-    if st.session_state.genogram_data:
-        st.subheader("📊 Estado Actual del Genograma Sistémico")
-        df_gen = pd.DataFrame(st.session_state.genogram_data)
-        st.dataframe(df_gen, use_container_width=True)
-
-# Módulo 3: Análisis Grafológico Aplicado (Modelo Sandra Cerro)
-def render_graphology_module():
-    st.header("✍️ Panel de Evaluación Grafológica de Recursos Humanos")
-    st.markdown("Suba una muestra de escritura en hoja A4 blanca sin pautar (máximo 2 párrafos con firma al pie) para el análisis conductual y de compatibilidad directiva.")
-    
-    miembro_eval = st.text_input("Nombre del Evaluado para el Análisis Grafológico")
-    uploaded_file = st.file_uploader("Cargar imagen de escritura manuscrita y firma (PNG/JPG)", type=["png", "jpg", "jpeg"])
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        presion = st.slider("Presión del Trazo (Firmeza / Energía)", 1, 10, 5)
-    with col2:
-        orden = st.slider("Orden y Claridad Estructural", 1, 10, 7)
-    with col3:
-        velocidad = st.slider("Velocidad Escritural (Dinamismo)", 1, 10, 6)
-        
-    if st.button("Procesar Perfil Conductual Grafológico"):
-        if miembro_eval:
-            st.session_state.grapho_data[miembro_eval] = {
-                "presion": presion,
-                "orden": orden,
-                "velocidad": velocidad
-            }
-            st.success(f"Análisis grafológico procesado bajo los parámetros de la profesora Sandra Cerro para {miembro_eval}.")
-            st.info("📝 **Conclusión Preliminar:** El nivel de energía escritural indica alta capacidad de liderazgo operativo con tendencia a la centralización de decisiones.")
-        else:
-            st.error("Ingrese el nombre del miembro evaluado.")
-
-# Módulo 4: Sucesión, Plexo Normativo Argentino y Blindaje Patrimonial
-def render_succession_module():
-    st.header("⚖️ Estrategia Jurídica y Sucesoria (Derecho Argentino)")
-    st.markdown("Optimización patrimonial, evitación de costos litigiosos y preservación de la unidad empresaria.")
-    
-    st.info("Herramientas de blindaje y continuidad disponibles bajo normativa argentina vigente:")
-    
-    opcion_estrategica = st.selectbox(
-        "Seleccione el instrumento de arquitectura legal preferido:",
-        [
-            "Cesión de Cuotas / Acciones con Reserva de Usufructo y Voto Prioritario",
-            "Fideicomiso de Administración y Legado (Trustee Familiar)",
-            "Protocolo de Acuerdos de Accionarios y Directorio",
-            "Planificación Sucesoria Anticipada (Pacto de Herencia Futura Art. 1010 CCCN)"
-        ]
-    )
-    
-    if "Usufructo" in opcion_estrategica:
-        st.write("**Detalle Técnico:** Permite al fundador conservar el control político (votos) y los frutos económicos (dividendos/usufructo) mientras transmite la nuda propiedad a la siguiente generación, evitando la apertura de procesos sucesorios judiciales onerosos.")
-    elif "Fideicomiso" in opcion_estrategica:
-        st.write("**Detalle Técnico:** Aislamiento de los activos productivos del patrimonio personal de los herederos, designando un comité técnico o trustee profesional para administrar con reglas estrictas.")
-    else:
-        st.write("**Detalle Técnico:** Marco normativo contractual destinado a alinear los intereses contrapuestos y establecer mecanismos claros de resolución de conflictos.")
-
-# Flujo Principal de la Aplicación
-if not st.session_state.user_authenticated:
-    authentication_gate()
+        start_game = st.form_submit_button("🎮 INICIAR PARTIDA")
+        if start_game and name and pwd:
+            st.session_state.player_name = name
+            st.session_state.player_role = role
+            st.rerun()
+        elif start_game:
+            st.warning("Por favor complete todos los campos para iniciar.")
 else:
-    st.sidebar.title(f"👤 Hola, {st.session_state.current_user}")
-    st.sidebar.markdown(f"**Rol:** {st.session_state.user_role}")
-    st.sidebar.markdown("---")
-    
-    menu_choice = st.sidebar.radio(
-        "Navegación del Simulador",
-        [
-            "1. Línea de Tiempo e Hitos",
-            "2. Genograma y Teoría de Bowen",
-            "3. Análisis Grafológico (Sandra Cerro)",
-            "4. Estrategia Sucesoria y Legal (Argentina)",
-            "5. Panel de Administrador y Reportes"
-        ]
-    )
-    
-    if st.sidebar.button("Cerrar Sesión"):
-        st.session_state.user_authenticated = False
-        st.rerun()
+    # Cabecera Estilo HUD de Videojuego
+    st.markdown(f"**Jugador:** {st.session_state.player_name} | **Rol:** {st.session_state.player_role} | 🕹️ **STAGE ACTUAL: {st.session_state.stage} / 5**")
+    st.markdown("---")
 
-    if menu_choice == "1. Línea de Tiempo e Hitos":
-        render_timeline_module()
-    elif menu_choice == "2. Genograma y Teoría de Bowen":
-        render_genogram_module()
-    elif menu_choice == "3. Análisis Grafológico (Sandra Cerro)":
-        render_graphology_module()
-    elif menu_choice == "4. Estrategia Sucesoria y Legal (Argentina)":
-        render_succession_module()
-    elif menu_choice == "5. Panel de Administrador y Reportes":
-        st.header("🛠️ Panel de Control y Auditoría del Administrador")
-        st.write("Historial consolidado de interacciones de todos los usuarios en el simulador:")
-        st.json(st.session_state.genogram_data)
-        st.json(st.session_state.grapho_data)
+    # ---------------------------------------------------------
+    # STAGE 1: Fundacional - El Sueño y los Orígenes (Línea de Tiempo)
+    # ---------------------------------------------------------
+    if st.session_state.stage == 1:
+        st.markdown("<div class='stage-box'>", unsafe_allow_html=True)
+        st.subheader("🏁 Stage 1: El Sueño Fundacional y las Primeras Grietas")
+        st.write("Te encuentras en el año de fundación de la compañía operativa. Los riesgos son altos y el capital es escaso. Se requiere una decisión de carácter histórico.")
+        
+        dilema_1 = st.radio(
+            "Ante una crisis financiera severa en los primeros años, ¿cuál es tu movimiento estratégico?",
+            [
+                "A) Hipotecar bienes personales familiares para salvar la compañía operativa (Prioridad absoluta al legado productivo).",
+                "B) Buscar socios externos y diluir el control accionario familiar para repartir el riesgo.",
+                "C) Redimensionar drásticamente la estructura, recortar operaciones y avanzar de forma lenta pero con capital propio."
+            ]
+        )
+        
+        if st.button("🚀 Ejecutar Decisión y Avanzar al Stage 2"):
+            st.session_state.history_log.append({"stage": 1, "dilema": dilema_1})
+            st.session_state.stage = 2
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
+    # ---------------------------------------------------------
+    # STAGE 2: El Genograma y la Teoría de Bowen (Triangulaciones)
+    # ---------------------------------------------------------
+    elif st.session_state.stage == 2:
+        st.markdown("<div class='stage-box'>", unsafe_allow_html=True)
+        st.subheader("🧬 Stage 2: El Genograma Sistémico y las Triadas")
+        st.write("El grupo crece. Las tensiones familiares se trasladan al directorio. Para avanzar, debes revelar la dinámica de alianzas.")
+        
+        pregunta_bowen = st.selectbox(
+            "¿Cómo se comporta habitualmente ante un conflicto grave de intereses con otro miembro de la familia en la empresa?",
+            [
+                "Busco un tercero influyente (asesor, gerente externo o familiar aliado) para triangular y mediar la tensión.",
+                "Afronto la confrontación directa de manera frontal, centralizando la autoridad ejecutiva.",
+                "Me repliego patrimonialmente y evito el contacto operativo diario, delegando en mandos medios."
+            ]
+        )
+        
+        if st.button("🚀 Consolidar Genograma y Avanzar al Stage 3"):
+            st.session_state.history_log.append({"stage": 2, "dinamica": pregunta_bowen})
+            st.session_state.stage = 3
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ---------------------------------------------------------
+    # STAGE 3: Grafología Conductual (Modelo Sandra Cerro)
+    # ---------------------------------------------------------
+    elif st.session_state.stage == 3:
+        st.markdown("<div class='stage-box'>", unsafe_allow_html=True)
+        st.subheader("✍️ Stage 3: Biometría Escritural y Grafología")
+        st.write("Para desbloquear el siguiente nivel de gobernanza, el sistema evalúa la impronta conductual de tu liderazgo a través del modelo grafológico aplicado a RRHH.")
+        
+        st.text_area("Describa en un párrafo breve su visión personal sobre el liderazgo en la empresa familiar y firme al pie con sus iniciales:")
+        
+        perfil_graf = st.selectbox(
+            "Seleccione el rasgo predominante de su pulso escritural actual:",
+            [
+                "Trazo firme, vertical, organizado y con presión constante (Liderazgo ejecutivo estructurado).",
+                "Trazo dinámico, ascendente, rápido y amplio (Liderazgo visionario expansivo).",
+                "Trazo contenido, pausado, márgenes estrictos (Liderazgo conservador de resguardo patrimonial)."
+            ]
+        )
+        
+        if st.button("🚀 Registrar Perfil Grafológico y Avanzar al Stage 4"):
+            st.session_state.history_log.append({"stage": 3, "grafologia": perfil_graf})
+            st.session_state.stage = 4
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ---------------------------------------------------------
+    # STAGE 4: Estrategia Sucesoria y Plexo Normativo (Argentina)
+    # ---------------------------------------------------------
+    elif st.session_state.stage == 4:
+        st.markdown("<div class='stage-box'>", unsafe_allow_html=True)
+        st.subheader("⚖️ Stage 4: Arquitectura Legal y Sucesoria (Blindaje Patrimonial)")
+        st.write("Has llegado al núcleo patrimonial. Es hora de definir la estrategia jurídica bajo el derecho argentino para evitar costos judiciales y garantizar la continuidad generacional sin fisuras.")
+        
+        estrategia = st.selectbox(
+            "Seleccione el instrumento definitivo para la transición de mando y riqueza:",
+            [
+                "Cesión de cuotas/acciones con reserva de usufructo vitalicio y voto prioritario (Control político asegurado para fundadores).",
+                "Fideicomiso de administración y legado familiar (Protección de activos frente a contingencias externas y profesionales externos trustee).",
+                "Protocolo Familiar vinculante con penalidades patrimoniales ante incumplimiento de acuerdos de accionarios."
+            ]
+        )
+        
+        if st.button("🚀 Guardar Estrategia y Ver Reporte Final (Stage 5)"):
+            st.session_state.history_log.append({"stage": 4, "estrategia": estrategia})
+            st.session_state.stage = 5
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ---------------------------------------------------------
+    # STAGE 5: Reporte Final, Legado y Matriz de Posicionamiento
+    # ---------------------------------------------------------
+    elif st.session_state.stage == 5:
+        st.markdown("<div class='stage-box'>", unsafe_allow_html=True)
+        st.subheader("🏆 STAGE FINAL COMPLETADO: Matriz de Legado e Instrumentos")
+        st.success(f"¡Partida finalizada con éxito para el usuario: {st.session_state.player_name}!")
+        
+        st.markdown("### 📊 Historial Trazado en el Videojuego:")
+        for log in st.session_state.history_log:
+            st.write(f"- **Stage {log['stage']}:** Registrado correctamente en la línea evolutiva del grupo.")
+            
+        st.markdown("### 📄 Corolario Instrumental y Soportes Técnicos Generados:")
+        st.info("✓ Reglas y procedimientos de Juntas y Asambleas Familiares homologadas.\n✓ Directrices del Protocolo Constitucional del Grupo.\n✓ Plan estratégico de blindaje sucesorio exento de costas judiciales en jurisdicción argentina.")
+        
+        if st.button("🔄 Reiniciar Partida / Nuevo Jugador"):
+            st.session_state.stage = 1
+            st.session_state.player_name = ""
+            st.session_state.history_log = []
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
